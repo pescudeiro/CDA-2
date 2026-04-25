@@ -5,7 +5,7 @@ from nbconvert.preprocessors import ExecutePreprocessor
 with open('notebooks/01_dataset_description.ipynb') as f:
     nb = nbformat.read(f, as_version=4)
 
-ep = ExecutePreprocessor(timeout=180, kernel_name='python3')
+ep = ExecutePreprocessor(timeout=300, kernel_name='cda-venv')
 try:
     ep.preprocess(nb, {'metadata': {'path': 'notebooks'}})
     print('Notebook executed successfully!')
