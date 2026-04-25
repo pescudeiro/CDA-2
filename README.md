@@ -2,7 +2,6 @@
 
 **Materia:** Ciencia de Datos Aplicada — ITBA
 **Entregable:** 2 — *Recopilación y preparación de datos*
-**Equipo:** Patricio Escudeiro (61156), Jose Burgos (61525)
 
 ---
 
@@ -94,15 +93,6 @@ python run_notebook.py
 ```
 
 Alternativamente, abrir `notebooks/01_dataset_description_executed.ipynb` en Jupyter y ejecutar Run All.
-
----
-
-## Próximos pasos (entregable 3)
-
-1. Embeddings con `sentence-transformers` y `cosine_similarity` como feature.
-2. Baseline supervisado: regresión logística sobre features actuales.
-3. Modelo expresivo: gradient boosting o fine-tune de un encoder.
-4. Análisis de errores: estudiar falsos positivos que `word_overlap` no detecta.
 
 ---
 
