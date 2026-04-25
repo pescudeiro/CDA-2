@@ -13,3 +13,5 @@ __pycache__/
 fix_notebook.py
 gen_notebook.py
 run_notebook.py
+
+docs/PRESENTACION.md

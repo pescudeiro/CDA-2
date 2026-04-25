@@ -119,12 +119,10 @@ import seaborn as sns
 import os
 import glob
 
-# Configurar estilos
 sns.set_theme(style="whitegrid", palette="deep")
 plt.rcParams['figure.figsize'] = (12, 6)
 plt.rcParams['font.size'] = 12
 
-# Ruta base de los datos
 DATA_DIR = '../data/existingDatasets'
 
 print("Librerías cargadas correctamente.")
@@ -132,27 +130,22 @@ print(f"Directorio de datos: {DATA_DIR}")""")
 
 # ============ LOAD DATASET ============
 code('''def load_dataset(name):
-    """Cargar un dataset completo (tables + splits)"""
     base = os.path.join(DATA_DIR, name)
-    
-    # Cargar tablas
+
     tableA = pd.read_csv(os.path.join(base, 'tableA.csv'), dtype=str)
     tableB = pd.read_csv(os.path.join(base, 'tableB.csv'), dtype=str)
-    
-    # Cargar splits
+
     train = pd.read_csv(os.path.join(base, 'train.csv'), dtype=str)
     valid = pd.read_csv(os.path.join(base, 'valid.csv'), dtype=str)
     test = pd.read_csv(os.path.join(base, 'test.csv'), dtype=str)
-    
-    # Convertir label a int
+
     for df in [train, valid, test]:
         df['label'] = df['label'].astype(int)
-    
-    # Convertir precios a float (NaN si vacío)
+
     for table in [tableA, tableB]:
         if 'price' in table.columns:
             table['price'] = pd.to_numeric(table['price'], errors='coerce')
-    
+
     return {
         'tableA': tableA,
         'tableB': tableB,
@@ -161,7 +154,6 @@ code('''def load_dataset(name):
         'test': test
     }
 
-# Cargar los tres datasets
 datasets = {
     'amazon_google': load_dataset('structured_amazon_google'),
     'walmart_amazon': load_dataset('structured_walmart_amazon'),
@@ -186,14 +178,14 @@ for ax, (name, ds) in zip(axes, datasets.items()):
     all_labels = pd.concat([ds['train']['label'], ds['valid']['label'], ds['test']['label']])
     counts = all_labels.value_counts().sort_index()
     
-    bars = ax.bar(['No Match (0)', 'Match (1)'], counts.values, 
+    bars = ax.bar(['No Match (0)', 'Match (1)'], counts.values,
                    color=['#e74c3c', '#2ecc71'], alpha=0.8)
-    
+
     for bar, val in zip(bars, counts.values):
         ax.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 50,
                 f'{val}\\n({val/counts.sum()*100:.1f}%)',
                 ha='center', va='bottom', fontweight='bold', fontsize=11)
-    
+
     ax.set_title(name.replace('_', '-').title(), fontsize=13, fontweight='bold')
     ax.set_ylabel('Cantidad de pares')
     ax.set_ylim(0, max(counts.values) * 1.15)
@@ -203,7 +195,6 @@ plt.tight_layout()
 plt.savefig('../data/label_distribution.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-# Imprimir ratios
 print("\\nRatios Match/No Match:")
 for name, ds in datasets.items():
     all_labels = pd.concat([ds['train']['label'], ds['valid']['label'], ds['test']['label']])
@@ -228,8 +219,7 @@ code('''for name, ds in datasets.items():
     print("\\n--- Table B ---")
     print(f"Registros: {len(ds['tableB'])}")
     print(f"Columnas: {list(ds['tableB'].columns)}")
-    
-    # Estadísticas de precio
+
     if 'price' in ds['tableA'].columns:
         print("\\n--- Estadísticas de Precio (Table A) ---")
         price_a = pd.to_numeric(ds['tableA']['price'], errors='coerce')
@@ -266,8 +256,7 @@ for name, ds in datasets.items():
         print(f"    count={int(d['count'])}, mean=${d['mean']:.2f}, std=${d['std']:.2f}")
         print(f"    min=${d['min']:.2f}, Q1=${d['25%']:.2f}, median=${d['50%']:.2f}, "
               f"Q3=${d['75%']:.2f}, max=${d['max']:.2f}")
-        print(f"    skewness={sk:.2f}, kurtosis={ku:.2f}  "
-              f"(skew>0 = cola derecha; kurt>0 = mas picuda que normal)")
+        print(f"    skewness={sk:.2f}, kurtosis={ku:.2f}")
 
 print("\\n" + "=" * 70)
 print("ESTADISTICAS DESCRIPTIVAS - VARIABLES CATEGORICAS")
@@ -313,27 +302,24 @@ code('''for name, ds in datasets.items():
     print(f"\\n{'='*60}")
     print(f"Dataset: {name}")
     print(f"{'='*60}")
-    
-    # Identificar campos de texto
+
     text_fields_a = [c for c in ds['tableA'].columns if c not in ['id', 'price']]
-    
+
     for field in text_fields_a:
         values = ds['tableA'][field].dropna()
         if len(values) == 0:
             print(f"\\n  {field}: TODOS LOS VALORES SON NaN")
             continue
-        
-        # Longitud del texto
+
         lengths = values.astype(str).str.len()
         word_counts = values.astype(str).str.split().str.len()
-        
+
         print(f"\\n  Campo: {field}")
         print(f"    No NaN: {len(values)}/{len(ds['tableA'])} ({len(values)/len(ds['tableA'])*100:.1f}%)")
         print(f"    Unique values: {values.nunique()}")
         print(f"    Longitud caracteres - Media: {lengths.mean():.1f}, Min: {lengths.min()}, Max: {lengths.max()}")
         print(f"    Longitud palabras - Media: {word_counts.mean():.1f}, Min: {word_counts.min()}, Max: {word_counts.max()}")
-        
-        # Ejemplos
+
         print(f"    Ejemplos:")
         for val in values.head(2).astype(str):
             print(f"      '{val[:100]}{'...' if len(val)>100 else ''}'")
@@ -345,14 +331,11 @@ md("### 3.4 Visualización: Distribución de Longitud de Texto")
 code('''fig, axes = plt.subplots(2, 3, figsize=(18, 10))
 
 for idx, (name, ds) in enumerate(datasets.items()):
-    # Campo principal de texto
     text_field = 'title' if 'title' in ds['tableA'].columns else 'name'
-    
-    # Distribución de longitud de caracteres
+
     lengths_a = ds['tableA'][text_field].dropna().astype(str).str.len()
     lengths_b = ds['tableB'][text_field].dropna().astype(str).str.len()
-    
-    # Histograma
+
     ax = axes[0, idx]
     ax.hist(lengths_a, bins=30, alpha=0.5, label=f'Table A (n={len(lengths_a)})', color='#3498db')
     ax.hist(lengths_b, bins=30, alpha=0.5, label=f'Table B (n={len(lengths_b)})', color='#e74c3c')
@@ -360,8 +343,7 @@ for idx, (name, ds) in enumerate(datasets.items()):
     ax.set_xlabel('Caracteres')
     ax.set_ylabel('Frecuencia')
     ax.legend()
-    
-    # Boxplot
+
     ax = axes[1, idx]
     ax.boxplot([lengths_a, lengths_b], tick_labels=['Table A', 'Table B'])
     ax.set_title(f'Distribución de longitud - {name.replace("_", "-").title()}')
@@ -379,8 +361,7 @@ code('''fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 for ax, (name, ds) in zip(axes, datasets.items()):
     price_a = pd.to_numeric(ds['tableA']['price'], errors='coerce')
     price_b = pd.to_numeric(ds['tableB']['price'], errors='coerce')
-    
-    # Filtrar valores razonables (< 10000 para evitar outliers extremos)
+
     price_a = price_a[(price_a > 0) & (price_a < 10000)]
     price_b = price_b[(price_b > 0) & (price_b < 10000)]
     
@@ -405,30 +386,26 @@ code('''for name, ds in datasets.items():
     print(f"{'='*60}")
     
     train = ds['train']
-    
-    # Identificar el campo de texto principal
+
     if 'table1.title' in train.columns:
         t1_col, t2_col = 'table1.title', 'table2.title'
     elif 'table1.name' in train.columns:
         t1_col, t2_col = 'table1.name', 'table2.name'
     else:
         t1_col, t2_col = 'table1.title', 'table2.title'
-    
-    # Ejemplos de MATCH
+
     matches = train[train['label'] == 1].head(3)
     print("\\n--- Ejemplos de MATCH (mismo producto) ---")
     for _, row in matches.iterrows():
         print(f"\\n  TableA: {row[t1_col][:120]}")
         print(f"  TableB: {row[t2_col][:120]}")
-    
-    # Ejemplos de NO MATCH
+
     no_matches = train[train['label'] == 0].head(3)
     print("\\n--- Ejemplos de NO MATCH (productos diferentes) ---")
     for _, row in no_matches.iterrows():
         print(f"\\n  TableA: {row[t1_col][:120]}")
         print(f"  TableB: {row[t2_col][:120]}")
-    
-    # Falsos positivos potenciales
+
     print("\\n--- Falsos Positivos Potenciales (productos similares) ---")
     if 'table1.manufacturer' in train.columns:
         t1_brand, t2_brand = 'table1.manufacturer', 'table2.manufacturer'
@@ -456,10 +433,8 @@ md("### 4.1 Datos Faltantes (Missing Values)")
 code('''fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
 for ax, (name, ds) in zip(axes, datasets.items()):
-    # Combinar tables para análisis
     combined = pd.concat([ds['tableA'], ds['tableB']], ignore_index=True)
-    
-    # Calcular missing por columna
+
     missing = combined.isna().mean() * 100
     missing = missing[missing > 0].sort_values(ascending=True)
     
@@ -481,7 +456,6 @@ plt.tight_layout()
 plt.savefig('../data/missing_values.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-# Imprimir resumen numérico
 print("Resumen de valores faltantes:")
 for name, ds in datasets.items():
     print(f"\\n  === {name} ===")
@@ -501,30 +475,26 @@ md("### 4.2 Duplicados")
 code('''print("Análisis de duplicados:")
 for name, ds in datasets.items():
     print(f"\\n  === {name} ===")
-    
+
     for table_name in ['tableA', 'tableB']:
         table = ds[table_name]
-        
-        # Duplicados por ID
+
         id_dups = table['id'].duplicated().sum()
         print(f"  {table_name}: {id_dups} IDs duplicados de {len(table)}")
-        
-        # Duplicados completos
+
         full_dups = table.duplicated().sum()
         print(f"  {table_name}: {full_dups} filas completamente duplicadas")
-    
-    # Duplicados en train/valid/test
+
     for split_name in ['train', 'valid', 'test']:
         split = ds[split_name]
         pair_dups = split.duplicated(subset=['table1.id', 'table2.id']).sum()
         print(f"  {split_name}: {pair_dups} pares duplicados")
-    
+
     print()''')
 
 # ============ OUTLIERS ============
 md("### 4.3 Outliers en Precio")
 code('''def iqr_outliers(series):
-    """Devuelve (lower, upper, n_outliers, n_valid) usando regla 1.5*IQR."""
     s = series.dropna()
     q1, q3 = s.quantile(0.25), s.quantile(0.75)
     iqr = q3 - q1
@@ -538,7 +508,6 @@ for ax, (name, ds) in zip(axes, datasets.items()):
     price_a = pd.to_numeric(ds['tableA']['price'], errors='coerce').dropna()
     price_b = pd.to_numeric(ds['tableB']['price'], errors='coerce').dropna()
 
-    # Umbral IQR calculado por tabla (no compartido)
     _, _, _, _, _, out_a, n_a = iqr_outliers(price_a)
     _, _, _, _, _, out_b, n_b = iqr_outliers(price_b)
 
@@ -558,8 +527,7 @@ plt.tight_layout()
 plt.savefig('../data/price_outliers.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-print("Resumen de outliers en precio (regla 1.5xIQR, por tabla, "
-      "denominador = filas con precio no-nulo):\\n")
+print("Resumen de outliers en precio:\\n")
 for name, ds in datasets.items():
     print(f"  === {name} ===")
     for table_name in ['tableA', 'tableB']:
@@ -581,32 +549,29 @@ for name, ds in datasets.items():
     print(f"\\n{'='*60}")
     print(f"Dataset: {name}")
     print(f"{'='*60}")
-    
-    # Verificar que los IDs en train/valid/test existen en las tablas
+
     tableA_ids = set(ds['tableA']['id'].astype(str))
     tableB_ids = set(ds['tableB']['id'].astype(str))
-    
+
     for split_name in ['train', 'valid', 'test']:
         split = ds[split_name]
-        
+
         t1_found = split['table1.id'].astype(str).isin(tableA_ids).sum()
         t2_found = split['table2.id'].astype(str).isin(tableB_ids).sum()
-        
+
         t1_orphan = len(split) - t1_found
         t2_orphan = len(split) - t2_found
-        
+
         print(f"\\n  {split_name}:")
         print(f"    Table1 IDs encontrados: {t1_found}/{len(split)} ({t1_orphan} orfanos)")
         print(f"    Table2 IDs encontrados: {t2_found}/{len(split)} ({t2_orphan} orfanos)")
-    
-    # Verificar consistencia de labels
+
     all_labels = pd.concat([ds['train']['label'], ds['valid']['label'], ds['test']['label']])
     unique_labels = all_labels.unique()
     print(f"\\n  Labels únicos: {unique_labels}")
     if len(unique_labels) != 2:
         print(f"  ADVERTENCIA: Labels inesperados!")
-    
-    # Campos vacíos vs NaN
+
     for table_name in ['tableA', 'tableB']:
         table = ds[table_name]
         empty_strings = (table == '').sum()
@@ -631,54 +596,43 @@ A partir del diagnóstico anterior aplicamos cuatro tipos de transformaciones:
 code('''import re
 
 def normalize_text(s):
-    """Normalizar texto: lowercase, remover puntuación, colapsar espacios."""
     if pd.isna(s):
         return s
     s = str(s).lower()
-    s = re.sub(r"[^a-z0-9\\s]", " ", s)   # quitar puntuación/símbolos
-    s = re.sub(r"\\s+", " ", s).strip()    # colapsar whitespace
+    s = re.sub(r"[^a-z0-9\\s]", " ", s)
+    s = re.sub(r"\\s+", " ", s).strip()
     return s if s else np.nan
 
 def clean_dataset(name, ds):
-    """Aplicar transformaciones de limpieza al dataset"""
     cleaned = {}
 
     for table_name in ['tableA', 'tableB']:
         table = ds[table_name].copy()
 
-        # 1. Remover duplicados por ID
         table = table.drop_duplicates(subset=['id'], keep='first')
 
-        # 2. Convertir strings vacíos a NaN
         table = table.replace('', np.nan)
 
-        # 3. Strip whitespace en campos de texto
         text_cols = [c for c in table.columns if c not in ['id', 'price']]
         for col in text_cols:
             table[col] = table[col].astype(str).str.strip()
             table[col] = table[col].replace('nan', np.nan)
 
-        # 4. Normalizar campos de texto principales (lowercase + sin puntuación)
-        # Conservamos el original como _raw por trazabilidad y creamos versiones _norm
         for col in text_cols:
             table[col + '_norm'] = table[col].apply(normalize_text)
 
-        # 5. Normalizar precio
         if 'price' in table.columns:
             table['price'] = pd.to_numeric(table['price'], errors='coerce')
-            # Winsorizar outliers extremos (> 99th percentile) -> NaN
             price_upper = table['price'].quantile(0.99)
             table.loc[table['price'] > price_upper, 'price'] = np.nan
 
         cleaned[table_name] = table
-    
-    # 6. Procesar splits
+
     for split_name in ['train', 'valid', 'test']:
         split = ds[split_name].copy()
         split = split.replace('', np.nan)
         split['label'] = split['label'].astype(int)
 
-        # Remover pares con IDs orfanos
         t1_ids = set(cleaned['tableA']['id'].astype(str))
         t2_ids = set(cleaned['tableB']['id'].astype(str))
         split = split[
@@ -686,7 +640,6 @@ def clean_dataset(name, ds):
             split['table2.id'].astype(str).isin(t2_ids)
         ].reset_index(drop=True)
 
-        # Normalizar texto en los splits (para que las features usen texto limpio)
         text_split_cols = [c for c in split.columns
                            if (c.startswith('table1.') or c.startswith('table2.'))
                            and not c.endswith('.id') and not c.endswith('.price')]
@@ -697,11 +650,10 @@ def clean_dataset(name, ds):
 
     return cleaned
 
-# Aplicar limpieza
 cleaned_datasets = {}
 for name, ds in datasets.items():
     cleaned_datasets[name] = clean_dataset(name, ds)
-    
+
     print(f"\\n=== {name} - Transformaciones aplicadas ===")
     for table_name in ['tableA', 'tableB']:
         original = len(ds[table_name])
@@ -739,7 +691,6 @@ for name, ds in cleaned_datasets.items():
     cat_cols = [c for c in cat_candidates if c in ds['tableA'].columns]
 
     for col in cat_cols:
-        # Concatenar valores de A y B y entrenar un único encoder
         combined = pd.concat([ds['tableA'][col], ds['tableB'][col]]).fillna('__MISSING__').astype(str)
         le = LabelEncoder().fit(combined)
         ds['tableA'][col + '_enc'] = le.transform(ds['tableA'][col].fillna('__MISSING__').astype(str))
@@ -762,12 +713,11 @@ fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 for ax, (name, ds) in zip(axes, cleaned_datasets.items()):
     price_a = ds['tableA']['price'].dropna()
     price_b = ds['tableB']['price'].dropna()
-    
-    # Estandarización
+
     scaler = StandardScaler()
     all_prices = pd.concat([price_a, price_b])
     scaler.fit(all_prices.values.reshape(-1, 1))
-    
+
     price_a_scaled = scaler.transform(price_a.values.reshape(-1, 1))
     price_b_scaled = scaler.transform(price_b.values.reshape(-1, 1))
     
@@ -794,13 +744,11 @@ code('''def jaccard(a, b):
     return len(sa & sb) / len(sa | sb)
 
 def generate_features(ds, name):
-    """Generar features para el matching usando los campos normalizados (_norm)."""
     features = {}
 
     for split_name in ['train', 'valid', 'test']:
         split = ds[split_name].copy()
 
-        # Detectar campo de texto principal (preferir _norm si existe)
         if 'table1.title_norm' in split.columns:
             t1, t2 = 'table1.title_norm', 'table2.title_norm'
             field = 'title'
@@ -811,12 +759,10 @@ def generate_features(ds, name):
             t1, t2 = 'table1.title', 'table2.title'
             field = 'title'
 
-        # Feature 1: diferencia de longitud (caracteres)
         split[f'len_{field}_diff'] = (
             split[t1].fillna('').str.len() - split[t2].fillna('').str.len()
         ).abs()
 
-        # Feature 2: coincidencia de marca (case-insensitive sobre versión normalizada)
         for brand_col in ['manufacturer', 'brand']:
             c1 = f'table1.{brand_col}_norm'
             c2 = f'table2.{brand_col}_norm'
@@ -826,14 +772,12 @@ def generate_features(ds, name):
                 ).astype(int)
                 break
 
-        # Feature 2b: coincidencia de categoria (Walmart-Amazon)
         if 'table1.category_norm' in split.columns and 'table2.category_norm' in split.columns:
             split['category_match'] = (
                 split['table1.category_norm'].fillna('__a__') ==
                 split['table2.category_norm'].fillna('__b__')
             ).astype(int)
 
-        # Feature 3: precio
         if 'table1.price' in split.columns:
             p1 = pd.to_numeric(split['table1.price'], errors='coerce')
             p2 = pd.to_numeric(split['table2.price'], errors='coerce')
@@ -841,14 +785,12 @@ def generate_features(ds, name):
             split['price_ratio'] = p1 / (p2 + 1e-8)
             split['has_both_prices'] = (p1.notna() & p2.notna()).astype(int)
 
-        # Feature 4: Jaccard de palabras (sobre texto normalizado)
         split['word_overlap'] = split.apply(lambda r: jaccard(r[t1], r[t2]), axis=1)
 
         features[split_name] = split
 
     return features
 
-# Generar features para cada dataset
 all_features = {}
 for name, ds in cleaned_datasets.items():
     all_features[name] = generate_features(ds, name)
@@ -856,14 +798,12 @@ for name, ds in cleaned_datasets.items():
     print(f"\\n=== {name} - Features generadas ===")
     train = all_features[name]['train']
     base_cols = set(datasets[name]['train'].columns)
-    # Sólo features numéricas nuevas (las _norm son texto)
     new_feature_cols = [c for c in train.columns
                         if c not in base_cols
                         and c != 'label'
                         and pd.api.types.is_numeric_dtype(train[c])]
     print(f"  Nuevas features numéricas: {new_feature_cols}")
 
-    # Correlación de features con el label
     print("\\n  Correlación de features con label (match=1):")
     for col in new_feature_cols:
         if train[col].notna().any():
@@ -919,7 +859,6 @@ plt.tight_layout()
 plt.savefig('../data/feature_correlation.png', dpi=150, bbox_inches='tight')
 plt.show()
 
-# Resumen tabular
 print("Features finales que pasan al modelo (correlacion con label):\\n")
 for name, splits in all_features.items():
     train = splits['train']
@@ -931,6 +870,117 @@ for name, splits in all_features.items():
         corr = train[c].corr(train['label'])
         print(f"    {c:25s}  corr={corr:+.3f}")
     print()''')
+
+# ============ PCA ============
+md("""### 5.5 PCA sobre las features generadas
+
+Aplicamos PCA al set de features numéricas generadas en 5.3 (`word_overlap`, `brand_match`,
+`category_match` cuando aplica, `price_diff`, `price_ratio`, `has_both_prices`, `len_*_diff`)
+para dos objetivos exploratorios:
+
+1. **Ver si la varianza se concentra en pocos componentes** → indicaría redundancia entre features
+   y permitiría reducir dimensionalidad de cara al modelo.
+2. **Visualizar la separabilidad de clases en 2D** → sanity check de que el feature space distingue
+   match de no-match antes de entrenar.
+
+Estandarizamos con `StandardScaler` antes de PCA (las features están en escalas muy distintas:
+Jaccard ∈ [0,1], `price_diff` en dólares, `len_diff` en caracteres). Imputamos NaN con la mediana
+sólo para PCA (no afecta el dataset que va al modelo).
+""")
+code('''from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
+fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+
+pca_summary = {}
+
+for idx, (name, splits) in enumerate(all_features.items()):
+    train = splits['train']
+    base_cols = set(datasets[name]['train'].columns)
+    feature_cols = [c for c in train.columns
+                    if c not in base_cols and c != 'label'
+                    and pd.api.types.is_numeric_dtype(train[c])]
+
+    X = train[feature_cols].values
+    y = train['label'].values
+
+    X = SimpleImputer(strategy='median').fit_transform(X)
+    X = StandardScaler().fit_transform(X)
+
+    X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+
+    pca = PCA(n_components=min(len(feature_cols), X.shape[0]))
+    X_pca = pca.fit_transform(X)
+
+    evr = pca.explained_variance_ratio_
+    cum = np.cumsum(evr)
+    pca_summary[name] = {
+        'features': feature_cols,
+        'evr': evr,
+        'cum': cum,
+        'loadings_pc1': dict(zip(feature_cols, pca.components_[0])),
+        'loadings_pc2': dict(zip(feature_cols, pca.components_[1])) if len(evr) > 1 else None,
+    }
+
+    ax = axes[0, idx]
+    xs = np.arange(1, len(evr) + 1)
+    ax.bar(xs, evr, alpha=0.7, color='#3498db', label='Individual')
+    ax.plot(xs, cum, 'o-', color='#e74c3c', label='Acumulada')
+    ax.axhline(0.9, color='gray', linestyle='--', linewidth=0.8, label='90% varianza')
+    ax.set_title(f'{name.replace("_", "-").title()}  |  k={len(feature_cols)} features',
+                 fontweight='bold')
+    ax.set_xlabel('Componente principal')
+    ax.set_ylabel('Varianza explicada')
+    ax.set_xticks(xs)
+    ax.set_ylim(0, 1.05)
+    ax.legend(loc='center right', fontsize=9)
+
+    ax = axes[1, idx]
+    rng = np.random.default_rng(42)
+    n_max = min(3000, len(y))
+    sample_idx = rng.choice(len(y), size=n_max, replace=False)
+    Xs, ys = X_pca[sample_idx], y[sample_idx]
+
+    ax.scatter(Xs[ys == 0, 0], Xs[ys == 0, 1],
+               s=10, alpha=0.25, color='#e74c3c', label='No Match (0)')
+    ax.scatter(Xs[ys == 1, 0], Xs[ys == 1, 1],
+               s=14, alpha=0.7, color='#2ecc71', label='Match (1)')
+    ax.set_title(f'PC1 ({evr[0]*100:.1f}%) vs PC2 ({evr[1]*100:.1f}%)',
+                 fontweight='bold')
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.legend(loc='best', fontsize=9)
+
+plt.suptitle('PCA sobre features generadas — varianza y separabilidad de clases',
+             fontsize=15, fontweight='bold', y=1.00)
+plt.tight_layout()
+plt.savefig('../data/pca_analysis.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+print("Resumen PCA:\\n")
+for name, info in pca_summary.items():
+    evr = info['evr']
+    cum = info['cum']
+    n_for_90 = int(np.searchsorted(cum, 0.90) + 1)
+    print(f"  === {name} ===")
+    print(f"    Features de entrada: {len(info['features'])}")
+    print(f"    Varianza explicada por componente: " +
+          ", ".join(f"PC{i+1}={v*100:.1f}%" for i, v in enumerate(evr)))
+    print(f"    Componentes para >=90% varianza: {n_for_90}/{len(evr)}")
+    print(f"    Loadings PC1 (peso de cada feature):")
+    for f, w in sorted(info['loadings_pc1'].items(), key=lambda kv: -abs(kv[1])):
+        print(f"      {f:25s}  {w:+.3f}")
+    print()''')
+
+md("""**Lectura:** PCA aquí no busca tanto reducir dimensionalidad — son pocas features —
+sino **diagnosticar redundancia** y **visualizar separabilidad**. Si los primeros 2-3 componentes
+ya capturan la mayor parte de la varianza, el feature set es redundante; si el scatter PC1×PC2
+muestra los matches concentrados en una región, confirma que las features generadas son
+informativas para el clasificador. Las features `price_*` correlacionadas (`price_diff`,
+`price_ratio`, `has_both_prices`) suelen colapsarse en un único componente, lo que valida
+que aportan señal de precio compartida más que dimensiones independientes.
+""")
 
 # ============ REFLECTION ============
 md("""## 6. Reflexión Final
@@ -990,8 +1040,7 @@ md("""## 6. Reflexión Final
 """)
 
 # ============ SAVE ============
-code('''# Guardar datasets limpios para el siguiente entregable
-import pickle
+code('''import pickle
 
 with open('../data/cleaned_datasets.pkl', 'wb') as f:
     pickle.dump(cleaned_datasets, f)
