@@ -1,0 +1,15 @@
+# Large binary files
+*.tar.gz
+*.pkl
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.pyc
+
+# Helper scripts (not needed in repo)
+fix_notebook.py
+gen_notebook.py
+run_notebook.py
