@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Matching — Recopilación y Preparación de Datos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="deck-stage.js"></script>
+<style>
+  :root {
+    --bg:        #f7f6f2;
+    --bg-dark:   #1a1e2e;
+    --bg-mid:    #eeecea;
+    --ink:       #1a1e2e;
+    --ink-light: #4a5068;
+    --accent:    #1e3a8a;
+    --accent2:   #c0392b;
+    --rule:      #c8c4b8;
+    --serif:     'Crimson Pro', Georgia, serif;
+    --sans:      'Source Sans 3', system-ui, sans-serif;
+  }
+
+  /* TYPE SCALE — 1920×1080 */
+  /* title: 64px | subtitle: 44px | body: 34px | small: 28px | caption: 22px */
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  deck-stage { font-family: var(--sans); }
+
+  section {
+    background: var(--bg);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    padding: 100px;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── SHARED ── */
+  .rule-top {
+    width: 72px;
+    height: 4px;
+    background: var(--accent);
+    margin-bottom: 40px;
+    flex-shrink: 0;
+  }
+  .slide-title {
+    font-family: var(--serif);
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--ink);
+    margin-bottom: 52px;
+    flex-shrink: 0;
+  }
+  .slide-subtitle {
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--ink-light);
+    line-height: 1.2;
+  }
+  .body-text {
+    font-size: 34px;
+    line-height: 1.5;
+    color: var(--ink-light);
+    font-weight: 300;
+  }
+  .small-text {
+    font-size: 28px;
+    line-height: 1.5;
+    color: var(--ink-light);
+    font-weight: 300;
+  }
+  .caption {
+    font-size: 24px;
+    color: var(--ink-light);
+    font-style: italic;
+  }
+  .accent-label {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 28px;
+  }
+
+  /* ── SLIDE 1 — TITLE ── */
+  #s1 {
+    background: var(--bg-dark);
+    color: #f7f6f2;
+    justify-content: flex-end;
+    padding-bottom: 100px;
+  }
+  #s1 .top-rule {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+    background: var(--accent);
+  }
+  #s1 .entregable {
+    font-size: 24px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8891b0;
+    margin-bottom: 36px;
+    font-weight: 600;
+  }
+  #s1 .main-title {
+    font-family: var(--serif);
+    font-size: 84px;
+    font-weight: 600;
+    line-height: 1.05;
+    color: #f7f6f2;
+    margin-bottom: 36px;
+    max-width: 1400px;
+  }
+  #s1 .subtitle {
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 300;
+    font-style: italic;
+    color: #8891b0;
+    margin-bottom: 80px;
+  }
+  #s1 .meta-row {
+    display: flex;
+    gap: 80px;
+    align-items: flex-start;
+    border-top: 1px solid #333a54;
+    padding-top: 40px;
+  }
+  #s1 .meta-item { display: flex; flex-direction: column; gap: 8px; }
+  #s1 .meta-label { font-size: 24px; letter-spacing: 0.1em; text-transform: uppercase; color: #5a6380; font-weight: 600; }
+  #s1 .meta-value { font-size: 28px; color: #c8ccd8; }
+
+  /* ── SLIDE 2 — CONTEXT ── */
+  #s2 .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    flex: 1;
+    align-items: start;
+  }
+  #s2 .def-box {
+    background: var(--bg-mid);
+    border-left: 4px solid var(--accent);
+    padding: 48px 52px;
+  }
+  #s2 .def-box .term {
+    font-family: var(--serif);
+    font-size: 38px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  #s2 .right-stack { display: flex; flex-direction: column; gap: 36px; }
+  #s2 .ex-pair {
+    background: #fff;
+    border: 1px solid var(--rule);
+    padding: 32px 36px;
+  }
+  #s2 .ex-label { font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 14px; }
+  #s2 .ex-label.match { color: #166534; }
+  #s2 .ex-label.nomatch { color: var(--accent2); }
+  #s2 .ex-src { font-size: 26px; color: var(--ink-light); line-height: 1.4; }
+  #s2 .ex-src span { color: var(--ink); font-weight: 600; }
+
+  /* ── SLIDE 3 — DATASET ORIGIN ── */
+  #s3 .dataset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 44px;
+    flex: 1;
+    align-items: start;
+  }
+  #s3 .ds-card {
+    border-top: 3px solid var(--accent);
+    padding-top: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #s3 .ds-name {
+    font-family: var(--serif);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+  }
+  #s3 .ds-type {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  #s3 .ds-desc {
+    font-size: 28px;
+    color: var(--ink-light);
+    line-height: 1.45;
+  }
+  #s3 .ds-stat {
+    font-size: 24px;
+    color: var(--ink-light);
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  #s3 .ds-stat strong { color: var(--ink); font-weight: 700; }
+  #s3 .source-note {
+    font-size: 24px;
+    color: var(--ink-light);
+    font-style: italic;
+    padding-top: 40px;
+    border-top: 1px solid var(--rule);
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+
+  /* ── SLIDE 4 — STRUCTURE ── */
+  #s4 .layout {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 72px;
+    flex: 1;
+    align-items: start;
+  }
+  #s4 table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 26px;
+  }
+  #s4 th {
+    background: var(--accent);
+    color: #fff;
+    padding: 18px 22px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 24px;
+    letter-spacing: 0.05em;
+  }
+  #s4 td {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-light);
+    vertical-align: top;
+  }
+  #s4 tr:nth-child(even) td { background: var(--bg-mid); }
+  #s4 td.dataset { color: var(--ink); font-weight: 600; }
+  #s4 .right-panel { display: flex; flex-direction: column; gap: 36px; }
+  #s4 .struct-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--rule);
+  }
+  #s4 .struct-item:last-child { border-bottom: none; }
+  #s4 .struct-label {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  #s4 .struct-val { font-size: 28px; color: var(--ink); line-height: 1.4; }
+
+  /* ── SLIDE 5 — LABEL DISTRIBUTION (dark) ── */
+  #s5 {
+    background: var(--bg-dark);
+    color: #f7f6f2;
+  }
+  #s5 .rule-top { background: #8891b0; }
+  #s5 .slide-title { color: #f7f6f2; }
+  #s5 .layout {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 80px;
+    flex: 1;
+    align-items: center;
+  }
+  #s5 .key-stats { display: flex; flex-direction: column; gap: 44px; }
+  #s5 .stat-block { display: flex; flex-direction: column; gap: 8px; }
+  #s5 .stat-num {
+    font-family: var(--serif);
+    font-size: 96px;
+    font-weight: 600;
+    line-height: 1;
+    color: #f7f6f2;
+  }
+  #s5 .stat-unit {
+    font-size: 38px;
+    font-weight: 300;
+    color: #8891b0;
+  }
+  #s5 .stat-desc { font-size: 28px; color: #8891b0; }
+  #s5 .consequence {
+    margin-top: auto;
+    padding: 36px 40px;
+    border: 1px solid #333a54;
+    font-size: 28px;
+    color: #8891b0;
+    line-height: 1.5;
+  }
+  #s5 .consequence strong { color: #f7f6f2; }
+  #s5 img { width: 100%; height: auto; border: 1px solid #333a54; }
+
+  /* ── SLIDE 6 — TEXT ANALYSIS ── */
+  #s6 .layout {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 80px;
+    flex: 1;
+    align-items: start;
+  }
+  #s6 img { width: 100%; height: auto; border: 1px solid var(--rule); }
+  #s6 .findings { display: flex; flex-direction: column; gap: 36px; }
+  #s6 .finding-item {
+    padding-left: 28px;
+    border-left: 3px solid var(--accent);
+  }
+  #s6 .finding-head { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+  #s6 .finding-body { font-size: 26px; color: var(--ink-light); line-height: 1.45; }
+
+  /* ── SLIDE 7 — MISSING VALUES ── */
+  #s7 .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 80px;
+    flex: 1;
+    align-items: start;
+  }
+  #s7 img { width: 100%; height: auto; border: 1px solid var(--rule); }
+  #s7 .miss-table { display: flex; flex-direction: column; gap: 0; }
+  #s7 .miss-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+    align-items: center;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 26px;
+  }
+  #s7 .miss-row:last-child { border-bottom: none; }
+  #s7 .miss-dataset { font-weight: 700; color: var(--ink); }
+  #s7 .miss-field { color: var(--ink-light); }
+  #s7 .miss-pct {
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--accent2);
+    text-align: right;
+    min-width: 90px;
+  }
+  #s7 .miss-pct.moderate { color: #d97706; }
+  #s7 .miss-pct.low { color: var(--ink-light); }
+  #s7 .decision-box {
+    background: var(--bg-mid);
+    border-left: 4px solid #d97706;
+    padding: 32px 36px;
+    margin-top: 40px;
+    font-size: 26px;
+    color: var(--ink-light);
+    line-height: 1.5;
+  }
+  #s7 .decision-box strong { color: var(--ink); }
+
+  /* ── SLIDE 8 — PRICE OUTLIERS ── */
+  #s8 .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    flex: 1;
+    align-items: start;
+  }
+  #s8 img { width: 100%; height: auto; border: 1px solid var(--rule); }
+  #s8 .right-panel { display: flex; flex-direction: column; gap: 32px; }
+  #s8 .skew-item { display: flex; flex-direction: column; gap: 8px; }
+  #s8 .skew-dataset { font-size: 26px; font-weight: 700; color: var(--ink); }
+  #s8 .skew-stat { font-size: 24px; color: var(--ink-light); line-height: 1.4; }
+  #s8 .skew-bar {
+    height: 8px;
+    background: var(--bg-mid);
+    border-radius: 4px;
+    position: relative;
+    margin-top: 8px;
+  }
+  #s8 .skew-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent2);
+  }
+  #s8 .transform-note {
+    margin-top: auto;
+    background: var(--bg-mid);
+    border-left: 4px solid var(--accent);
+    padding: 28px 32px;
+    font-size: 26px;
+    color: var(--ink-light);
+    line-height: 1.5;
+  }
+  #s8 .transform-note strong { color: var(--ink); }
+
+  /* ── SLIDE 9 — TRANSFORMATIONS (dark) ── */
+  #s9 {
+    background: var(--bg-dark);
+    color: #f7f6f2;
+  }
+  #s9 .rule-top { background: #8891b0; }
+  #s9 .slide-title { color: #f7f6f2; }
+  #s9 .transform-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 44px;
+    flex: 1;
+    align-items: start;
+  }
+  #s9 .t-card {
+    border: 1px solid #2a3048;
+    padding: 44px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  #s9 .t-num {
+    font-family: var(--serif);
+    font-size: 56px;
+    font-weight: 600;
+    color: #2c3e6a;
+    line-height: 1;
+  }
+  #s9 .t-head { font-size: 34px; font-weight: 700; color: #f7f6f2; }
+  #s9 .t-body { font-size: 26px; color: #8891b0; line-height: 1.5; }
+  #s9 .t-body strong { color: #c8ccd8; }
+
+  /* ── SLIDE 10 — FEATURE CORRELATION ── */
+  #s10 .layout {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 80px;
+    flex: 1;
+    align-items: start;
+  }
+  #s10 img { width: 100%; height: auto; border: 1px solid var(--rule); }
+  #s10 .finding-list { display: flex; flex-direction: column; gap: 32px; }
+  #s10 .f-item { display: flex; flex-direction: column; gap: 10px; }
+  #s10 .f-feature {
+    font-family: 'Courier New', monospace;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--bg-mid);
+    padding: 6px 14px;
+    display: inline-block;
+  }
+  #s10 .f-desc { font-size: 26px; color: var(--ink-light); line-height: 1.4; }
+  #s10 .f-bar-wrap { display: flex; align-items: center; gap: 14px; }
+  #s10 .f-bar { height: 6px; background: var(--bg-mid); flex: 1; border-radius: 3px; }
+  #s10 .f-fill { height: 100%; border-radius: 3px; }
+  #s10 .f-fill.pos { background: #166534; }
+  #s10 .f-fill.neg { background: var(--accent2); }
+  #s10 .f-val { font-size: 24px; font-weight: 700; min-width: 60px; }
+
+  /* ── SLIDE 11 — NEXT STEPS ── */
+  #s11 .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    flex: 1;
+    align-items: start;
+  }
+  #s11 .step-list { display: flex; flex-direction: column; gap: 32px; }
+  #s11 .step-item { display: flex; gap: 24px; align-items: flex-start; }
+  #s11 .step-n {
+    font-family: var(--serif);
+    font-size: 48px;
+    font-weight: 600;
+    color: var(--rule);
+    line-height: 1;
+    min-width: 40px;
+    flex-shrink: 0;
+  }
+  #s11 .step-body { display: flex; flex-direction: column; gap: 8px; }
+  #s11 .step-head { font-size: 30px; font-weight: 700; color: var(--ink); }
+  #s11 .step-desc { font-size: 26px; color: var(--ink-light); line-height: 1.4; }
+  #s11 .difficulty-box {
+    background: var(--bg-mid);
+    padding: 44px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  #s11 .diff-head {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  #s11 .diff-item { display: flex; flex-direction: column; gap: 6px; }
+  #s11 .diff-item .label { font-size: 26px; font-weight: 700; color: var(--ink); }
+  #s11 .diff-item .desc { font-size: 24px; color: var(--ink-light); line-height: 1.4; }
+
+  /* ── SLIDE 12 — CLOSE ── */
+  #s12 {
+    background: var(--accent);
+    color: #f7f6f2;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  #s12 .close-top { font-size: 24px; letter-spacing: 0.14em; text-transform: uppercase; color: #6a82c0; font-weight: 600; margin-bottom: 60px; }
+  #s12 .close-title {
+    font-family: var(--serif);
+    font-size: 80px;
+    font-weight: 600;
+    line-height: 1.05;
+    color: #f7f6f2;
+    max-width: 1100px;
+    margin-bottom: 60px;
+  }
+  #s12 .close-meta { font-size: 28px; color: #8891b0; line-height: 1.6; }
+  #s12 .close-meta strong { color: #c8ccd8; }
+
+  /* ── SECTION HEADER SLIDE ── */
+  .section-header {
+    background: var(--accent);
+    color: #f7f6f2;
+    justify-content: flex-end;
+    padding-bottom: 120px;
+  }
+  .section-header .section-num {
+    font-family: var(--serif);
+    font-size: 160px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.08);
+    position: absolute;
+    top: 40px;
+    right: 80px;
+    line-height: 1;
+  }
+  .section-header .section-label {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8891b0;
+    margin-bottom: 28px;
+  }
+  .section-header .section-title {
+    font-family: var(--serif);
+    font-size: 80px;
+    font-weight: 600;
+    color: #f7f6f2;
+    line-height: 1.05;
+    max-width: 900px;
+  }
+</style>
+</head>
+<body>
+<deck-stage width="1920" height="1080">
+
+  <!-- ─── 01 TITLE ─── -->
+  <section id="s1" data-label="01 Título">
+    <div class="top-rule"></div>
+    <div class="entregable" style="font-size:24px;">Ciencia de Datos Aplicada — Segundo Entregable</div>
+    <div class="main-title">Recopilación y<br>Preparación de Datos</div>
+    <div class="subtitle">Product Matching como Record Linkage supervisado</div>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Integrantes</span>
+        <span class="meta-value">Patricio Escudeiro (61156) &nbsp;·&nbsp; Jose Burgos (61525)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Fecha</span>
+        <span class="meta-value">Abril 2026</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 02 CONTEXT ─── -->
+  <section id="s2" data-label="02 El Problema">
+    <div class="rule-top"></div>
+    <div class="slide-title">¿Qué es Product Matching?</div>
+    <div class="cols">
+      <div>
+        <div class="def-box">
+          <div class="term">Definición</div>
+          <div class="body-text">Dado el mismo producto descrito por dos vendedores distintos, determinar si los registros corresponden al mismo ítem.</div>
+        </div>
+        <div style="margin-top:44px; font-size:28px; color:var(--ink-light); line-height:1.6;">
+          Es un problema de <strong style="color:var(--ink)">Record Linkage</strong> o <em>Entity Resolution</em>: identificar entidades del mundo real a partir de representaciones ruidosas y heterogéneas.
+          <br><br>
+          El challenge: títulos, marcas y precios se <strong style="color:var(--ink)">formatean de manera completamente distinta</strong> entre fuentes.
+        </div>
+      </div>
+      <div class="right-stack">
+        <div class="ex-pair">
+          <div class="ex-label match">✓ Match — mismo producto</div>
+          <div class="ex-src"><span>Table A:</span> motu digital performer 5 competitive upgrade (mac)</div>
+          <div style="height:12px"></div>
+          <div class="ex-src"><span>Table B:</span> motu digital performer dp5 software music production</div>
+        </div>
+        <div class="ex-pair">
+          <div class="ex-label nomatch">✗ No Match — distintos productos</div>
+          <div class="ex-src"><span>Table A:</span> microsoft visio standard 2007 version upgrade</div>
+          <div style="height:12px"></div>
+          <div class="ex-src"><span>Table B:</span> adobe cs3 design standard upgrade</div>
+        </div>
+        <div class="ex-pair">
+          <div class="ex-label" style="color:#d97706;">⚠ Falso Positivo Potencial</div>
+          <div class="ex-src"><span>[intuit]</span> quicken 2007 premier</div>
+          <div style="height:12px"></div>
+          <div class="ex-src"><span>[intuit]</span> quickbooks pro 2007 3 user</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 03 SECTION HEADER: DATOS ─── -->
+  <section class="section-header" data-label="03 Sección Datos">
+    <div class="section-num">I</div>
+    <div class="section-label">Sección 1</div>
+    <div class="section-title">Origen y Estructura<br>de los Datos</div>
+  </section>
+
+  <!-- ─── 04 DATASET ORIGIN ─── -->
+  <section id="s4" data-label="04 Datasets Seleccionados">
+    <div class="rule-top"></div>
+    <div class="slide-title">Tres datasets,</div>
+    <div class="dataset-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:44px;flex:1;align-items:start;">
+      <div class="ds-card" style="border-top:3px solid var(--accent);padding-top:36px;display:flex;flex-direction:column;gap:20px;">
+        <div class="ds-type" style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Estructurado</div>
+        <div class="ds-name" style="font-family:var(--serif);font-size:40px;font-weight:600;line-height:1.1;">Amazon–Google</div>
+        <div class="ds-desc" style="font-size:28px;color:var(--ink-light);line-height:1.45;">Software. Campos: <em>title, manufacturer, price</em>. Matching clásico estructurado.</div>
+        <div class="ds-stat" style="font-size:24px;color:var(--ink-light);padding-top:16px;border-top:1px solid var(--rule);">
+          <strong style="color:var(--ink);">1.363</strong> × <strong style="color:var(--ink);">3.226</strong> productos<br>
+          <strong style="color:var(--ink);">11.460</strong> pares etiquetados · 1.8 MB
+        </div>
+      </div>
+      <div class="ds-card" style="border-top:3px solid var(--accent);padding-top:36px;display:flex;flex-direction:column;gap:20px;">
+        <div class="ds-type" style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Estructurado · Mayor Escala</div>
+        <div class="ds-name" style="font-family:var(--serif);font-size:40px;font-weight:600;line-height:1.1;">Walmart–Amazon</div>
+        <div class="ds-desc" style="font-size:28px;color:var(--ink-light);line-height:1.45;">Electrónica. Agrega <em>category, brand, modelno</em>. Escala 10× en Table B.</div>
+        <div class="ds-stat" style="font-size:24px;color:var(--ink-light);padding-top:16px;border-top:1px solid var(--rule);">
+          <strong style="color:var(--ink);">2.554</strong> × <strong style="color:var(--ink);">22.074</strong> productos<br>
+          <strong style="color:var(--ink);">10.242</strong> pares etiquetados · 4.9 MB
+        </div>
+      </div>
+      <div class="ds-card" style="border-top:3px solid var(--accent);padding-top:36px;display:flex;flex-direction:column;gap:20px;">
+        <div class="ds-type" style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Textual Puro</div>
+        <div class="ds-name" style="font-family:var(--serif);font-size:40px;font-weight:600;line-height:1.1;">Abt–Buy</div>
+        <div class="ds-desc" style="font-size:28px;color:var(--ink-light);line-height:1.45;">Solo <em>name</em> y <em>description</em>. Sin estructura tabular. Stress-test del enfoque textual.</div>
+        <div class="ds-stat" style="font-size:24px;color:var(--ink-light);padding-top:16px;border-top:1px solid var(--rule);">
+          <strong style="color:var(--ink);">1.081</strong> × <strong style="color:var(--ink);">1.092</strong> productos<br>
+          <strong style="color:var(--ink);">9.575</strong> pares etiquetados · 4.5 MB
+        </div>
+      </div>
+    </div>
+    <div style="font-size:24px;color:var(--ink-light);font-style:italic;padding-top:32px;border-top:1px solid var(--rule);margin-top:40px;flex-shrink:0;">
+      Fuente: Papadakis et al. (2022). <em>Datasets for Supervised Matching in Clean-Clean Entity Resolution.</em> Zenodo. doi:10.5281/zenodo.7252010
+    </div>
+  </section>
+
+  <!-- ─── 05 STRUCTURE ─── -->
+  <section id="s5b" data-label="05 Estructura Común">
+    <div class="rule-top"></div>
+    <div class="slide-title">Estructura común a los tres datasets</div>
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:72px;flex:1;align-items:start;">
+      <div>
+        <table style="width:100%;border-collapse:collapse;font-size:26px;">
+          <thead>
+            <tr>
+              <th style="background:var(--accent);color:#fff;padding:18px 22px;text-align:left;font-weight:600;font-size:24px;">Dataset</th>
+              <th style="background:var(--accent);color:#fff;padding:18px 22px;text-align:right;font-size:24px;">Table A</th>
+              <th style="background:var(--accent);color:#fff;padding:18px 22px;text-align:right;font-size:24px;">Table B</th>
+              <th style="background:var(--accent);color:#fff;padding:18px 22px;text-align:right;font-size:24px;">Pares</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);font-weight:700;color:var(--ink);">Amazon–Google</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">1.363</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">3.226</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">11.460</td>
+            </tr>
+            <tr style="background:var(--bg-mid);">
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);font-weight:700;color:var(--ink);">Walmart–Amazon</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">2.554</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">22.074</td>
+              <td style="padding:16px 22px;border-bottom:1px solid var(--rule);text-align:right;color:var(--ink-light);">10.242</td>
+            </tr>
+            <tr>
+              <td style="padding:16px 22px;font-weight:700;color:var(--ink);">Abt–Buy</td>
+              <td style="padding:16px 22px;text-align:right;color:var(--ink-light);">1.081</td>
+              <td style="padding:16px 22px;text-align:right;color:var(--ink-light);">1.092</td>
+              <td style="padding:16px 22px;text-align:right;color:var(--ink-light);">9.575</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:44px;font-size:26px;color:var(--ink-light);line-height:1.5;">
+          Cada split incluye: <code style="background:var(--bg-mid);padding:2px 8px;font-size:24px;">_id</code>, <code style="background:var(--bg-mid);padding:2px 8px;font-size:24px;">label</code> (0/1), y los campos de A y B prefijados con <code style="background:var(--bg-mid);padding:2px 8px;font-size:24px;">table1.*</code> / <code style="background:var(--bg-mid);padding:2px 8px;font-size:24px;">table2.*</code>.
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:36px;">
+        <div style="border-left:3px solid var(--accent);padding-left:28px;">
+          <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Splits</div>
+          <div style="font-size:28px;color:var(--ink);line-height:1.5;">Train / Validation / Test<br><span style="color:var(--ink-light);">~60% / 20% / 20%</span></div>
+        </div>
+        <div style="border-left:3px solid var(--accent);padding-left:28px;">
+          <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Variable objetivo</div>
+          <div style="font-size:28px;color:var(--ink);line-height:1.5;"><code style="background:var(--bg-mid);padding:2px 8px;">label = 1</code> → mismo producto<br><code style="background:var(--bg-mid);padding:2px 8px;">label = 0</code> → producto distinto</div>
+        </div>
+        <div style="border-left:3px solid var(--accent);padding-left:28px;">
+          <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Variables</div>
+          <div style="font-size:26px;color:var(--ink-light);line-height:1.6;">
+            <strong style="color:var(--ink);">Texto:</strong> title / name / description<br>
+            <strong style="color:var(--ink);">Categóricas:</strong> brand, category, modelno<br>
+            <strong style="color:var(--ink);">Numérica:</strong> price (continua, sesgada)
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 06 SECTION HEADER: EDA ─── -->
+  <section class="section-header" data-label="06 Sección EDA">
+    <div class="section-num">II</div>
+    <div class="section-label">Sección 2</div>
+    <div class="section-title">Análisis Exploratorio<br>de Datos</div>
+  </section>
+
+  <!-- ─── 07 LABEL DISTRIBUTION ─── -->
+  <section id="s7b" data-label="07 Desbalance de Clases" style="background:var(--bg-dark);color:#f7f6f2;">
+    <div class="rule-top" style="background:#8891b0;"></div>
+    <div class="slide-title" style="color:#f7f6f2;">Fuerte desbalance de clases</div>
+    <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:80px;flex:1;align-items:center;">
+      <div style="display:flex;flex-direction:column;gap:40px;">
+        <div>
+          <div style="font-family:var(--serif);font-size:96px;font-weight:600;line-height:1;color:#f7f6f2;">~10%</div>
+          <div style="font-size:30px;color:#8891b0;margin-top:8px;">pares son Match (label=1)</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="font-size:26px;color:#c8ccd8;">Amazon–Google: <strong style="color:#f7f6f2;">10.2%</strong> (1.167 / 11.460)</div>
+          <div style="font-size:26px;color:#c8ccd8;">Walmart–Amazon: <strong style="color:#f7f6f2;">9.4%</strong> (962 / 10.242)</div>
+          <div style="font-size:26px;color:#c8ccd8;">Abt–Buy: <strong style="color:#f7f6f2;">10.7%</strong> (1.028 / 9.575)</div>
+        </div>
+        <div style="padding:32px 36px;border:1px solid #333a54;font-size:26px;color:#8891b0;line-height:1.5;">
+          Métrica de evaluación: <strong style="color:#f7f6f2;">F1 / Precision-Recall</strong>, no accuracy.
+        </div>
+      </div>
+      <div>
+        <img src="uploads/output_6_0.png" alt="Distribución de labels" style="width:100%;height:auto;border:1px solid #333a54;">
+        <div style="font-size:24px;color:#5a6380;font-style:italic;margin-top:16px;text-align:center;">Distribución de labels por dataset (train + valid + test)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 08 TEXT LENGTH ─── -->
+  <section id="s8b" data-label="08 Heterogeneidad Textual">
+    <div class="rule-top"></div>
+    <div class="slide-title">Heterogeneidad textual entre fuentes</div>
+    <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:80px;flex:1;align-items:start;">
+      <div>
+        <img src="uploads/output_14_0.png" alt="Longitud de texto" style="width:100%;height:auto;border:1px solid var(--rule);">
+        <div style="font-size:24px;color:var(--ink-light);font-style:italic;margin-top:14px;text-align:center;">Longitud de títulos (arriba: histograma · abajo: boxplot)</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:36px;">
+        <div style="padding-left:28px;border-left:3px solid var(--accent);">
+          <div style="font-size:30px;font-weight:700;margin-bottom:10px;">Longitud media de título</div>
+          <div style="font-size:26px;color:var(--ink-light);line-height:1.5;">
+            <strong style="color:var(--ink);">Amazon–Google:</strong> A=35 chars vs B=55 chars<br>
+            <strong style="color:var(--ink);">Walmart–Amazon:</strong> A=54 chars vs B=70 chars<br>
+            <strong style="color:var(--ink);">Abt–Buy:</strong> A=54 chars vs B=52 chars
+          </div>
+        </div>
+        <div style="padding-left:28px;border-left:3px solid var(--accent);">
+          <div style="font-size:30px;font-weight:700;margin-bottom:10px;">Caso extremo: Walmart–Amazon</div>
+          <div style="font-size:26px;color:var(--ink-light);line-height:1.5;">Table B llega a <strong style="color:var(--ink);">851 caracteres</strong> por título. Alta varianza interna. Distribución bimodal.</div>
+        </div>
+        <div style="padding-left:28px;border-left:3px solid var(--accent);">
+          <div style="font-size:30px;font-weight:700;margin-bottom:10px;">Implicancia</div>
+          <div style="font-size:26px;color:var(--ink-light);line-height:1.5;">El formato textual entre fuentes es <strong style="color:var(--ink);">muy heterogéneo</strong>. Justifica el problema: el matching exacto no funciona.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 09 MISSING VALUES ─── -->
+  <section id="s9b" data-label="09 Valores Faltantes">
+    <div class="rule-top"></div>
+    <div class="slide-title">Calidad de datos: valores faltantes</div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:80px;flex:1;align-items:start;">
+      <div>
+        <img src="uploads/output_21_0.png" alt="Valores faltantes" style="width:100%;height:auto;border:1px solid var(--rule);">
+        <div style="font-size:24px;color:var(--ink-light);font-style:italic;margin-top:14px;text-align:center;">% de valores faltantes por columna (tablas A+B combinadas)</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <div style="font-size:26px;color:var(--ink-light);line-height:1.5;margin-bottom:8px;">Columnas críticas con faltantes:</div>
+        <div style="display:flex;flex-direction:column;gap:0;">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);font-size:26px;">
+            <div><strong style="color:var(--ink);">Amazon–Google</strong><br><span style="color:var(--ink-light);">manufacturer</span></div>
+            <div style="font-family:var(--serif);font-size:36px;font-weight:600;color:var(--accent2);text-align:right;">89.0%</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);font-size:26px;">
+            <div><strong style="color:var(--ink);">Abt–Buy</strong><br><span style="color:var(--ink-light);">price (Table A)</span></div>
+            <div style="font-family:var(--serif);font-size:36px;font-weight:600;color:var(--accent2);text-align:right;">61.3%</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);font-size:26px;">
+            <div><strong style="color:var(--ink);">Walmart–Amazon</strong><br><span style="color:var(--ink-light);">modelno (Table B)</span></div>
+            <div style="font-family:var(--serif);font-size:36px;font-weight:600;color:#d97706;text-align:right;">28.5%</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:16px 0;font-size:26px;">
+            <div><strong style="color:var(--ink);">Walmart–Amazon</strong><br><span style="color:var(--ink-light);">price (Table B)</span></div>
+            <div style="font-family:var(--serif);font-size:36px;font-weight:600;color:#d97706;text-align:right;">13.0%</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-mid);border-left:4px solid #d97706;padding:28px 32px;font-size:24px;color:var(--ink-light);line-height:1.5;margin-top:8px;">
+          <strong style="color:var(--ink);">Decisión:</strong> mantener NaN en <em>price</em> en lugar de imputar; crear feature <code style="background:#fff;padding:2px 6px;">has_both_prices</code> para capturar la ausencia como señal.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 10 PRICE OUTLIERS ─── -->
+  <section id="s10b" data-label="10 Outliers en Precio">
+    <div class="rule-top"></div>
+    <div class="slide-title">Precio: distribución sesgada y outliers extremos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <img src="uploads/output_33_0.png" alt="Distribución de precios" style="width:100%;height:auto;border:1px solid var(--rule);">
+        <img src="uploads/output_25_0.png" alt="Outliers precio" style="width:100%;height:auto;border:1px solid var(--rule);">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:32px;">
+        <div style="font-size:26px;color:var(--ink-light);line-height:1.5;">Skewness extrema en los tres datasets. Outliers significativos incluso en escala logarítmica.</div>
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div style="border-left:3px solid var(--accent);padding-left:24px;">
+            <div style="font-size:26px;font-weight:700;">Amazon–Google</div>
+            <div style="font-size:24px;color:var(--ink-light);">Mediana $50 · Max <strong style="color:var(--ink);">$101.515</strong> · Skewness 25.5</div>
+            <div style="font-size:24px;color:var(--ink-light);">Outliers IQR×1.5: A=12.8% · B=14.5%</div>
+          </div>
+          <div style="border-left:3px solid var(--accent);padding-left:24px;">
+            <div style="font-size:26px;font-weight:700;">Walmart–Amazon</div>
+            <div style="font-size:24px;color:var(--ink-light);">Mediana $42 · Max <strong style="color:var(--ink);">$70.416</strong> · Skewness 22.5</div>
+            <div style="font-size:24px;color:var(--ink-light);">Outliers IQR×1.5: A=15.1% · B=11.3%</div>
+          </div>
+          <div style="border-left:3px solid var(--accent);padding-left:24px;">
+            <div style="font-size:26px;font-weight:700;">Abt–Buy</div>
+            <div style="font-size:24px;color:var(--ink-light);">Mediana $100 · Max <strong style="color:var(--ink);">$3.999</strong> · Skewness 4.5</div>
+            <div style="font-size:24px;color:var(--ink-light);">Outliers IQR×1.5: A=8.4% · B=10.5%</div>
+          </div>
+        </div>
+        <div style="background:var(--bg-mid);border-left:4px solid var(--accent);padding:28px 32px;font-size:24px;color:var(--ink-light);line-height:1.5;margin-top:auto;">
+          <strong style="color:var(--ink);">Tratamiento:</strong> Z-score unificado A+B + winsorización del percentil 99.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 11 SECTION HEADER: TRANSFORMACIONES ─── -->
+  <section class="section-header" data-label="11 Sección Transformaciones">
+    <div class="section-num">III</div>
+    <div class="section-label">Sección 3</div>
+    <div class="section-title">Transformaciones<br>y Feature Engineering</div>
+  </section>
+
+  <!-- ─── 12 TRANSFORMATIONS ─── -->
+  <section id="s12b" data-label="12 Transformaciones Aplicadas" style="background:var(--bg-dark);color:#f7f6f2;">
+    <div class="rule-top" style="background:#8891b0;"></div>
+    <div class="slide-title" style="color:#f7f6f2;">Cuatro frentes de preparación</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;flex:1;align-items:start;">
+      <div style="border:1px solid #2a3048;padding:44px 48px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-family:var(--serif);font-size:56px;font-weight:600;color:#2c3e6a;line-height:1;">1</div>
+        <div style="font-size:34px;font-weight:700;color:#f7f6f2;">Normalización de Texto</div>
+        <div style="font-size:26px;color:#8891b0;line-height:1.5;">Lowercase · remoción de puntuación · colapso de whitespace. Columnas <strong style="color:#c8ccd8;">_norm</strong> preservan la versión cruda para trazabilidad.</div>
+      </div>
+      <div style="border:1px solid #2a3048;padding:44px 48px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-family:var(--serif);font-size:56px;font-weight:600;color:#2c3e6a;line-height:1;">2</div>
+        <div style="font-size:34px;font-weight:700;color:#f7f6f2;">Estandarización Numérica</div>
+        <div style="font-size:26px;color:#8891b0;line-height:1.5;">Z-score sobre <strong style="color:#c8ccd8;">price</strong> con encoder unificado A+B. Winsorización del p99 para outliers extremos.</div>
+      </div>
+      <div style="border:1px solid #2a3048;padding:44px 48px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-family:var(--serif);font-size:56px;font-weight:600;color:#2c3e6a;line-height:1;">3</div>
+        <div style="font-size:34px;font-weight:700;color:#f7f6f2;">Codificación de Categóricas</div>
+        <div style="font-size:26px;color:#8891b0;line-height:1.5;">Label encoding <strong style="color:#c8ccd8;">unificado A+B</strong>. En Walmart–Amazon: 1.972 marcas únicas, solo <strong style="color:#c8ccd8;">400 en ambas tablas</strong>.</div>
+      </div>
+      <div style="border:1px solid #2a3048;padding:44px 48px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-family:var(--serif);font-size:56px;font-weight:600;color:#2c3e6a;line-height:1;">4</div>
+        <div style="font-size:34px;font-weight:700;color:#f7f6f2;">Generación de Features</div>
+        <div style="font-size:26px;color:#8891b0;line-height:1.5;"><strong style="color:#c8ccd8;">word_overlap</strong> (Jaccard) · <strong style="color:#c8ccd8;">brand_match</strong> · <strong style="color:#c8ccd8;">category_match</strong> · <strong style="color:#c8ccd8;">price_diff</strong> · <strong style="color:#c8ccd8;">price_ratio</strong> · <strong style="color:#c8ccd8;">has_both_prices</strong> · <strong style="color:#c8ccd8;">len_diff</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 13 FEATURE CORRELATION ─── -->
+  <section id="s13" data-label="13 Poder Discriminativo">
+    <div class="rule-top"></div>
+    <div class="slide-title">Validación: poder discriminativo de las features</div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:80px;flex:1;align-items:start;">
+      <div>
+        <img src="uploads/output_37_0.png" alt="Correlación features" style="width:100%;height:auto;border:1px solid var(--rule);">
+        <div style="font-size:24px;color:var(--ink-light);font-style:italic;margin-top:14px;text-align:center;">Correlación de Pearson feature–label por dataset (train)</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:32px;">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <code style="background:var(--bg-mid);padding:6px 14px;font-size:26px;font-weight:700;color:var(--accent);display:inline-block;font-family:'Courier New',monospace;">word_overlap</code>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="height:8px;background:var(--bg-mid);flex:1;border-radius:4px;"><div style="height:100%;border-radius:4px;background:#166534;width:88%;"></div></div>
+            <span style="font-size:24px;font-weight:700;min-width:80px;">+0.43</span>
+          </div>
+          <div style="font-size:24px;color:var(--ink-light);">Feature dominante. Consistente en los tres datasets (+0.37 a +0.44). Valida el enfoque textual.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <code style="background:var(--bg-mid);padding:6px 14px;font-size:26px;font-weight:700;color:var(--accent);display:inline-block;font-family:'Courier New',monospace;">brand_match</code>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="height:8px;background:var(--bg-mid);flex:1;border-radius:4px;"><div style="height:100%;border-radius:4px;background:#166534;width:28%;"></div></div>
+            <span style="font-size:24px;font-weight:700;min-width:80px;">+0.12</span>
+          </div>
+          <div style="font-size:24px;color:var(--ink-light);">Aporta especialmente en Amazon–Google. Menor efecto en los otros.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <code style="background:var(--bg-mid);padding:6px 14px;font-size:26px;font-weight:700;color:var(--accent);display:inline-block;font-family:'Courier New',monospace;">price_diff</code>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="height:8px;background:var(--bg-mid);flex:1;border-radius:4px;position:relative;"><div style="height:100%;border-radius:4px;background:var(--accent2);width:20%;"></div></div>
+            <span style="font-size:24px;font-weight:700;min-width:80px;">–0.09</span>
+          </div>
+          <div style="font-size:24px;color:var(--ink-light);">Signo correcto: productos matched tienen precios más similares.</div>
+        </div>
+        <div style="background:var(--bg-mid);border-left:4px solid #d97706;padding:24px 28px;font-size:24px;color:var(--ink-light);line-height:1.5;margin-top:8px;">
+          <strong style="color:var(--ink);">Hallazgo:</strong> <code style="font-size:24px;">category_match</code> no aporta en Walmart–Amazon (−0.01). Se mantiene por no dañar, se reporta.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 14 NEXT STEPS ─── -->
+  <section id="s14" data-label="14 Próximos Pasos">
+    <div class="rule-top"></div>
+    <div class="slide-title">Decisiones clave y próximos pasos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;flex:1;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:32px;">
+        <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">Entrega 3 — Modelado</div>
+        <div style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="font-family:var(--serif);font-size:48px;font-weight:600;color:var(--rule);line-height:1;min-width:40px;flex-shrink:0;">1</div>
+          <div>
+            <div style="font-size:30px;font-weight:700;color:var(--ink);">Embeddings textuales</div>
+            <div style="font-size:26px;color:var(--ink-light);">Sentence-transformers sobre el campo principal; agregar <code style="background:var(--bg-mid);font-size:24px;">cosine_similarity</code> como feature.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="font-family:var(--serif);font-size:48px;font-weight:600;color:var(--rule);line-height:1;min-width:40px;flex-shrink:0;">2</div>
+          <div>
+            <div style="font-size:30px;font-weight:700;color:var(--ink);">Baseline supervisado</div>
+            <div style="font-size:26px;color:var(--ink-light);">Regresión logística + features actuales. Piso de F1 documentado.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="font-family:var(--serif);font-size:48px;font-weight:600;color:var(--rule);line-height:1;min-width:40px;flex-shrink:0;">3</div>
+          <div>
+            <div style="font-size:30px;font-weight:700;color:var(--ink);">Modelo expresivo</div>
+            <div style="font-size:26px;color:var(--ink-light);">Gradient boosting o fine-tune de encoder. Comparación contra baseline.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:24px;align-items:flex-start;">
+          <div style="font-family:var(--serif);font-size:48px;font-weight:600;color:var(--rule);line-height:1;min-width:40px;flex-shrink:0;">4</div>
+          <div>
+            <div style="font-size:30px;font-weight:700;color:var(--ink);">Análisis de errores</div>
+            <div style="font-size:26px;color:var(--ink-light);">Falsos positivos que <code style="background:var(--bg-mid);font-size:24px;">word_overlap</code> solo no detecta.</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg-mid);padding:44px 48px;display:flex;flex-direction:column;gap:28px;">
+        <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">Dificultades identificadas</div>
+        <div>
+          <div style="font-size:28px;font-weight:700;color:var(--ink);">Desbalance 9:1</div>
+          <div style="font-size:24px;color:var(--ink-light);line-height:1.4;">Plan: <code style="background:#fff;font-size:24px;">class_weight='balanced'</code> o SMOTE en entrega 3.</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:700;color:var(--ink);">Falsos positivos de marca</div>
+          <div style="font-size:24px;color:var(--ink-light);line-height:1.4;"><em>Office 2007 Standard</em> vs <em>Office 2007 Home</em>: misma marca, mismo año, distinto producto.</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:700;color:var(--ink);">Ruido textual entre fuentes</div>
+          <div style="font-size:24px;color:var(--ink-light);line-height:1.4;">Matching exacto insuficiente. Justifica el uso de embeddings semánticos.</div>
+        </div>
+        <div style="padding-top:24px;border-top:1px solid var(--rule);">
+          <div style="font-size:24px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">Decisiones de esta entrega</div>
+          <div style="font-size:24px;color:var(--ink-light);line-height:1.6;">
+            · Normalización textual prioritaria<br>
+            · NaN en price sin imputar<br>
+            · Label encoding unificado A+B<br>
+            · Columnas crudas preservadas
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 15 CLOSE ─── -->
+  <section id="s15" data-label="15 Cierre" style="background:var(--accent);color:#f7f6f2;justify-content:center;align-items:flex-start;">
+    <div style="font-size:24px;letter-spacing:0.14em;text-transform:uppercase;color:#6a82c0;font-weight:600;margin-bottom:60px;">Ciencia de Datos Aplicada · Segundo Entregable · Abril 2026</div>
+    <div style="font-family:var(--serif);font-size:80px;font-weight:600;line-height:1.05;color:#f7f6f2;max-width:1100px;margin-bottom:60px;">
+      Los datos son atacables.<br>El problema, bien formulado.
+    </div>
+    <div style="font-size:28px;color:#8891b0;line-height:1.8;border-top:1px solid #2a4080;padding-top:44px;width:100%;">
+      <strong style="color:#c8ccd8;">Patricio Escudeiro</strong> (61156) &nbsp;·&nbsp;
+      <strong style="color:#c8ccd8;">Jose Burgos</strong> (61525)<br>
+      Notebook + datos en repositorio del equipo.
+    </div>
+  </section>
+
+</deck-stage>
+</body>
+</html>
