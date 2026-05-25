@@ -1,7 +1,7 @@
-# Product Matching — Recopilación y Preparación de Datos
+# Product Matching — Ciencia de Datos Aplicada
 
 **Materia:** Ciencia de Datos Aplicada — ITBA
-**Entregable:** 2 — *Recopilación y preparación de datos*
+**Entregables:** 2 — *Recopilación y preparación de datos* · 3 — *Modelado de la solución*
 
 ---
 
@@ -35,12 +35,19 @@ Trabajamos con **3 datasets** del benchmark de [Papadakis et al. (2022) en Zenod
 │   ├── text_length_distribution.png # Longitud de texto A vs B
 │   └── feature_correlation.png     # Correlación features ↔ label
 ├── notebooks/
-│   ├── 01_dataset_description.ipynb           # Notebook fuente
-│   └── 01_dataset_description_executed.ipynb  # Notebook ejecutado (con outputs)
+│   ├── 01_dataset_description.ipynb           # Entrega 2 — EDA + preparación (fuente)
+│   ├── 01_dataset_description_executed.ipynb  # Entrega 2 — ejecutado (con outputs)
+│   ├── 02_modeling.ipynb                       # Entrega 3 — modelado (fuente)
+│   └── 02_modeling_executed.ipynb             # Entrega 3 — ejecutado (con outputs)
+├── models/                          # Entrega 3 — modelo persistido
+│   ├── product_matcher.joblib       # Bundle reutilizable (clasificador + TF-IDF + umbral + ...)
+│   └── metrics.json                 # Métricas de test y ablation
 ├── docs/
 │   ├── [02] Recopilación y preparación de datos.pdf
+│   ├── [03] Modelado de la solución.pdf
 │   └── Propuesta de Proyecto_ Product Matching.pptx
-├── gen_notebook.py                 # Genera el notebook programáticamente
+├── gen_notebook.py                 # Genera el notebook de la entrega 2
+├── gen_modeling_notebook.py        # Genera el notebook de la entrega 3
 └── run_notebook.py                 # Ejecuta el notebook end-to-end
 ```
 
@@ -69,11 +76,54 @@ El notebook `01_dataset_description_executed.ipynb` cubre los 5 bloques del enun
 
 ---
 
+## Modelado de la solución (Entregable 3)
+
+> Notebook: `notebooks/02_modeling_executed.ipynb` · **Solo se usa el dataset Walmart-Amazon** (los otros fueron descartados por la cátedra).
+
+### Enfoque
+El problema es **product matching / entity resolution** planteado como **clasificación binaria supervisada de pares candidatos**: dado un par (registro de Walmart, registro de Amazon) predecir si son el mismo producto (`match`). Los splits etiquetados ya vienen provistos, lo que justifica el enfoque supervisado frente a clustering o RAG.
+
+### Features (espacio híbrido)
+- **Estructurales** (del entregable 2): `word_overlap` (Jaccard), `brand_match`, `category_match`, `price_diff`, `price_ratio`, `has_both_prices`, `len_title_diff`, más `modelno_match` (agregado aquí).
+- **Texto clásico:** `tfidf_cos` — coseno TF-IDF (1-2 gramas) entre títulos.
+- **Transformer (clase C10):** `emb_cos` — coseno de embeddings `sentence-transformers` (`all-MiniLM-L6-v2`); captura similitud semántica que TF-IDF no detecta.
+
+### Modelos y validación
+Tres modelos de complejidad creciente — **Regresión Logística** (baseline), **Random Forest** y **XGBoost** — con manejo de desbalance (`class_weight='balanced'` / `scale_pos_weight`). El **umbral de decisión se ajusta en validación** (máximo F1) y se reporta en test. Métricas apropiadas al desbalance (~9.4% positivos): **F1, PR-AUC, ROC-AUC**, precisión/recall y matriz de confusión.
+
+### Cómputo en GPU (CUDA)
+La generación de embeddings del transformer y el entrenamiento de XGBoost corren en **GPU NVIDIA (CUDA)** cuando está disponible (probado en RTX 3090); el notebook detecta el dispositivo y cae a CPU si no hay GPU. Regresión Logística y Random Forest se entrenan en CPU (scikit-learn no soporta GPU). El bundle persiste XGBoost en modo CPU para que se recargue sin GPU.
+
+### Resultados (test)
+
+| Modelo | F1 | Precisión | Recall | PR-AUC | ROC-AUC |
+|--------|----|-----------|--------|--------|---------|
+| Regresión Logística | 0.709 | 0.731 | 0.689 | 0.799 | 0.938 |
+| **Random Forest** (mejor) | **0.760** | 0.901 | 0.658 | 0.816 | 0.951 |
+| XGBoost | 0.747 | 0.864 | 0.658 | 0.803 | 0.943 |
+
+**Ablation (XGBoost)** — cada bloque de señal aporta valor:
+
+| Features | F1 | PR-AUC | ROC-AUC |
+|----------|----|--------|---------|
+| Estructural | 0.662 | 0.663 | 0.848 |
+| + TF-IDF | 0.751 | 0.795 | 0.936 |
+| + Transformer | 0.752 | 0.803 | 0.944 |
+
+La similitud de título (`emb_cos`/`tfidf_cos`/`word_overlap`) domina la importancia de features; el transformer suma señal semántica incremental sobre el texto clásico.
+
+### Persistencia
+El mejor modelo se guarda en `models/product_matcher.joblib` como **bundle auto-contenido** (clasificador + scaler + vectorizador TF-IDF + parámetros de limpieza + orden de features + umbral + id del modelo de embeddings). El notebook incluye una celda que **recarga el bundle y reproduce F1=0.760 exacto sin reentrenar**, dejando la solución lista para integrarse en el 4.º entregable.
+
+---
+
 ## Cómo reproducir
 
 ### Requisitos
 - Python ≥ 3.10
-- Paquetes: `pandas`, `numpy`, `matplotlib`, `seaborn`, `scikit-learn`, `scipy`, `nbformat`, `nbconvert`, `ipykernel`
+- Entrega 2: `pandas`, `numpy`, `matplotlib`, `seaborn`, `scikit-learn`, `scipy`, `nbformat`, `nbconvert`, `ipykernel`
+- Entrega 3 (además): `xgboost`, `torch`, `sentence-transformers`, `joblib`
+  - Para GPU: instalar `torch` con CUDA, p. ej. `pip install torch --index-url https://download.pytorch.org/whl/cu128`
 
 ### Setup
 ```bash
@@ -93,6 +143,17 @@ python run_notebook.py
 ```
 
 Alternativamente, abrir `notebooks/01_dataset_description_executed.ipynb` en Jupyter y ejecutar Run All.
+
+Para la entrega 3 (requiere haber corrido antes la entrega 2, que genera `data/all_features.pkl`):
+
+```bash
+# Regenerar el notebook de modelado
+python gen_modeling_notebook.py
+
+# Ejecutar end-to-end (usa GPU/CUDA si está disponible; descarga el transformer la primera vez)
+jupyter nbconvert --to notebook --execute --ExecutePreprocessor.kernel_name=cda-venv \
+  --output 02_modeling_executed.ipynb notebooks/02_modeling.ipynb
+```
 
 ---
 
